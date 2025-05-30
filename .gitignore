@@ -1,3 +1,4 @@
 /.vscode
 /bun.lock
 /node_modules
+/public

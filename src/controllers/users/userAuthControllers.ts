@@ -2,8 +2,10 @@ import express, { Request, Response } from "express";
 import generateNumericOTP from "../../helpers/otpGenerator";
 import verificationModel from "../../model/verificationModel";
 import { UserModel } from "../../model/user/userModel";
-import generateToken from "../../helpers/token";
+import generateToken from "../../helpers/Usertoken";
 import { CustomRequest } from "../../middlewares/token-decode";
+import { genderModel } from "../../model/admin/genderModel";
+import { intrestModel } from "../../model/admin/intrestModel";
 
 export const registerThrougMobileNumber = async (
   req: Request,
@@ -90,6 +92,7 @@ export const verifyOtp = async (req: Request, res: Response) => {
         data: "",
       });
     }
+    await verificationModel.findByIdAndDelete(verify._id);
     let data;
     data = await UserModel.findOne({
       email: email,
@@ -102,6 +105,7 @@ export const verifyOtp = async (req: Request, res: Response) => {
         mobileNumber: data.mobilenumber,
       };
       const token = generateToken(tokenData);
+      await verificationModel.findByIdAndDelete(verify._id);
       return res.status(200).json({
         status: true,
         message: "login Succesfully",
@@ -147,7 +151,25 @@ export const updateProfile = async (req: CustomRequest, res: Response) => {
     const photoPath = req.file?.path;
     if (photoPath) query.profilePicture = photoPath;
     if (name) query.name = name;
-    if (dob) query.birthDate = dob;
+    if (dob) {
+      query.birthDate = dob;
+      // Calculate age from dob (assuming dob is in ISO string or Date format)
+      const birthDate = new Date(dob);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      if (age < 18) {
+        return res.status(400).json({
+          status: false,
+          message: "Age must be greater than 18",
+          data: "",
+        });
+      }
+      query.age = age;
+    }
     if (gender) query.gender = gender;
     if (intrestedthings) query.intrestedthings = intrestedthings;
     // Check if all fields are present in the request or already exist in the database
@@ -187,6 +209,44 @@ export const updateProfile = async (req: CustomRequest, res: Response) => {
   } catch (error: any) {
     console.log("error", error.message);
 
+    return res.status(400).json({
+      status: false,
+      message: "something Went wrong",
+      data: "",
+    });
+  }
+};
+
+export const getGender = async (req: Request, res: Response) => {
+  try {
+    const genders = await genderModel.find();
+    return res.status(200).json({
+      status: true,
+      message: "Gender retrive",
+      data: genders,
+    });
+  } catch (error: any) {
+    console.log("error", error.message);
+    return res.status(400).json({
+      status: false,
+      message: "something Went wrong",
+      data: "",
+    });
+  }
+};
+
+export const getAllIntrest = async (req: Request, res: Response) => {
+  try {
+    const intrests = await intrestModel.find({
+      status: "active",
+    });
+    return res.status(200).json({
+      status: true,
+      message: "Intrest list",
+      data: intrests,
+    });
+  } catch (error: any) {
+    console.log("error", error.message);
     return res.status(400).json({
       status: false,
       message: "something Went wrong",

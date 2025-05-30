@@ -1,5 +1,7 @@
 import express from "express";
 import {
+  getAllIntrest,
+  getGender,
   registerThrougEmail,
   registerThrougMobileNumber,
   updateProfile,
@@ -46,6 +48,20 @@ router.patch(
   }
 );
 
-// router.patch("/")
+router.get("/getGender", async (req, res, next) => {
+  try {
+    await getGender(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/getAllIntrest", async (req, res, next) => {
+  try {
+    await getAllIntrest(req, res);
+  } catch (error) {
+    next(error)
+  }
+});
 
 export default router;
