@@ -15,6 +15,15 @@ export const addLikeToUser = async (req: CustomRequest, res: Response) => {
         data: "",
       });
     }
+    // Check if the user has already liked this user
+    const alreadyLiked = await likeModel.findOne({ by: userId, to: likeTo });
+    if (alreadyLiked) {
+      return res.status(400).json({
+      status: false,
+      message: "You have already liked this user",
+      data: "",
+      });
+    }
     const newLike = new likeModel({
       by: userId,
       to: likeTo,

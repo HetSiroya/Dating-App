@@ -10,6 +10,7 @@ export interface IUser extends Document {
   age: number;
   gender: mongoose.Schema.Types.ObjectId;
   intrestedthings: mongoose.Schema.Types.ObjectId[];
+  attract: mongoose.Schema.Types.ObjectId;
   isProfileCompleted: boolean;
   location: string;
   isPremium: boolean;
@@ -25,6 +26,10 @@ const UserSchema: Schema = new Schema<IUser>({
   age: { type: Number, min: 18 },
   gender: { type: mongoose.Schema.Types.ObjectId, ref: "Gender" },
   intrestedthings: [{ type: mongoose.Schema.Types.ObjectId, ref: "Interest" }],
+  attract: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "genders",
+  },
   location: {
     city: { type: String, default: "" },
     latitude: { type: Number, default: 0 },

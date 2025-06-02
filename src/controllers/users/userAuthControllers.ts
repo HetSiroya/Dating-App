@@ -146,7 +146,7 @@ export const verifyOtp = async (req: Request, res: Response) => {
 export const updateProfile = async (req: CustomRequest, res: Response) => {
   try {
     const userId = req.user?._id;
-    const { name, dob, gender, intrestedthings, location } = req.body;
+    const { name, dob, gender, intrestedthings, location, attract } = req.body;
     let query: any = {};
     const user = await UserModel.findById(userId);
     const photoPath = req.file?.path;
@@ -174,7 +174,9 @@ export const updateProfile = async (req: CustomRequest, res: Response) => {
     if (gender) query.gender = gender;
     if (intrestedthings) {
       if (Array.isArray(intrestedthings)) {
-        query.intrestedthings = intrestedthings.map((id: string) => new mongoose.Types.ObjectId(id.trim ? id.trim() : id));
+        query.intrestedthings = intrestedthings.map(
+          (id: string) => new mongoose.Types.ObjectId(id.trim ? id.trim() : id)
+        );
       } else if (typeof intrestedthings === "string") {
         query.intrestedthings = intrestedthings
           .split(",")
@@ -188,6 +190,9 @@ export const updateProfile = async (req: CustomRequest, res: Response) => {
         longitude: location.longitude || 0,
       };
     }
+    if (attract) {
+      query.attract = attract;
+    }
 
     // Check if all fields are present in the request or already exist in the database
     const finalName = name || user?.name;
@@ -195,6 +200,7 @@ export const updateProfile = async (req: CustomRequest, res: Response) => {
     const finalGender = gender || user?.gender;
     const finalintrestedthings = intrestedthings || user?.intrestedthings;
     const finalLocation = location || user?.location;
+    const finalAttract = attract || user?.attract;
 
     if (
       finalName &&
@@ -204,7 +210,8 @@ export const updateProfile = async (req: CustomRequest, res: Response) => {
       finalLocation &&
       finalLocation.city &&
       finalLocation.latitude !== undefined &&
-      finalLocation.longitude !== undefined
+      finalLocation.longitude !== undefined &&
+      finalAttract
     ) {
       query.isProfileCompleted = true;
     }
