@@ -5,12 +5,13 @@ export interface IUser extends Document {
   name: string;
   email: string;
   profilePicture: string;
-  mobilenumber: number;
+  mobilenumber: string;
   birthDate: string;
   age: number;
   gender: mongoose.Schema.Types.ObjectId;
-  intrestedthings: string[];
+  intrestedthings: mongoose.Schema.Types.ObjectId[];
   isProfileCompleted: boolean;
+  location: string;
   isPremium: boolean;
 }
 
@@ -19,11 +20,16 @@ const UserSchema: Schema = new Schema<IUser>({
   profilePicture: { type: String, default: "" },
   name: { type: String, default: "" },
   email: { type: String, unique: true, default: "" },
-  mobilenumber: { type: Number, unique: true },
+  mobilenumber: { type: String, default: null },
   birthDate: { type: String, default: "" },
   age: { type: Number, min: 18 },
-  gender: { type: mongoose.Schema.Types.ObjectId  },
-  intrestedthings: { type: [String], default: [] },
+  gender: { type: mongoose.Schema.Types.ObjectId, ref: "Gender" },
+  intrestedthings: [{ type: mongoose.Schema.Types.ObjectId, ref: "Interest" }],
+  location: {
+    city: { type: String, default: "" },
+    latitude: { type: Number, default: 0 },
+    longitude: { type: Number, default: 0 },
+  },
   isProfileCompleted: { type: Boolean, default: false },
   isPremium: { type: Boolean, default: false },
 });

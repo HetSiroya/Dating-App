@@ -1,11 +1,13 @@
 import express, { Request, Response } from "express";
 import generateNumericOTP from "../../helpers/otpGenerator";
+import mongoose from "mongoose";
 import verificationModel from "../../model/verificationModel";
 import { UserModel } from "../../model/user/userModel";
 import generateToken from "../../helpers/Usertoken";
 import { CustomRequest } from "../../middlewares/token-decode";
 import { genderModel } from "../../model/admin/genderModel";
 import { intrestModel } from "../../model/admin/intrestModel";
+import { log } from "console";
 
 export const registerThrougMobileNumber = async (
   req: Request,
@@ -144,9 +146,8 @@ export const verifyOtp = async (req: Request, res: Response) => {
 export const updateProfile = async (req: CustomRequest, res: Response) => {
   try {
     const userId = req.user?._id;
-    const { name, dob, gender, intrestedthings } = req.body;
-    let query: any;
-    query = {};
+    const { name, dob, gender, intrestedthings, location } = req.body;
+    let query: any = {};
     const user = await UserModel.findById(userId);
     const photoPath = req.file?.path;
     if (photoPath) query.profilePicture = photoPath;
@@ -171,20 +172,46 @@ export const updateProfile = async (req: CustomRequest, res: Response) => {
       query.age = age;
     }
     if (gender) query.gender = gender;
-    if (intrestedthings) query.intrestedthings = intrestedthings;
+    if (intrestedthings) {
+      if (Array.isArray(intrestedthings)) {
+        query.intrestedthings = intrestedthings.map((id: string) => new mongoose.Types.ObjectId(id.trim ? id.trim() : id));
+      } else if (typeof intrestedthings === "string") {
+        query.intrestedthings = intrestedthings
+          .split(",")
+          .map((id: string) => new mongoose.Types.ObjectId(id.trim()));
+      }
+    }
+    if (location) {
+      query.location = {
+        city: location.city || "",
+        latitude: location.latitude || 0,
+        longitude: location.longitude || 0,
+      };
+    }
+
     // Check if all fields are present in the request or already exist in the database
     const finalName = name || user?.name;
     const finalDob = dob || user?.birthDate;
     const finalGender = gender || user?.gender;
     const finalintrestedthings = intrestedthings || user?.intrestedthings;
+    const finalLocation = location || user?.location;
 
-    if (finalName && finalDob && finalGender && finalintrestedthings) {
+    if (
+      finalName &&
+      finalDob &&
+      finalGender &&
+      finalintrestedthings &&
+      finalLocation &&
+      finalLocation.city &&
+      finalLocation.latitude !== undefined &&
+      finalLocation.longitude !== undefined
+    ) {
       query.isProfileCompleted = true;
     }
+
     const updateData = await UserModel.findByIdAndUpdate(userId, query, {
       new: true,
     });
-    // console.log("updateData", updateData);
     if (!updateData) {
       return res.status(400).json({
         status: false,

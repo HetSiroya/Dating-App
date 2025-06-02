@@ -7,7 +7,6 @@ interface IGender {
 
 // Example Mongoose model (if using Mongoose)
 
-
 const genderSchema = new Schema<IGender>({
   gender: {
     type: String,
@@ -15,7 +14,8 @@ const genderSchema = new Schema<IGender>({
     enum: ["male", "female", "other"],
   },
   addedBy: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "admins",
     required: true,
   },
 });
