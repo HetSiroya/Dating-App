@@ -61,7 +61,14 @@ export const getUsers = async (req: CustomRequest, res: Response) => {
     if (intrest) query.intrest = intrest;
     if (categroy) query.gender = categroy;
 
-    const users = await UserModel.find(query);
+    let usersQuery = UserModel.find(query);
+
+    // If not premium, limit to 20 users
+    if (user.isPremium !== true) {
+      usersQuery = usersQuery.limit(20);
+    }
+
+    const users = await usersQuery;
 
     // Add distance to each user (if possible)
     const usersWithDistance = users.map((u) => {
