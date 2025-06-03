@@ -12,7 +12,11 @@ export interface IUser extends Document {
   intrestedthings: mongoose.Schema.Types.ObjectId[];
   attract: mongoose.Schema.Types.ObjectId;
   isProfileCompleted: boolean;
-  location: string;
+  location: {
+    city: string;
+    latitude: number;
+    longitude: number;
+  };
   isPremium: boolean;
 }
 

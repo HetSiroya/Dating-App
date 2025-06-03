@@ -2,6 +2,7 @@ import express from "express";
 import { auth } from "../../middlewares/token-decode";
 import {
   addFavorite,
+  fetchUsersWhoFavorited,
   getFavorite,
   removeFavorite,
 } from "../../controllers/users/favoriteControllers";
@@ -22,6 +23,7 @@ router.get("/getFavorite", auth, async (req, res, next) => {
     next(error);
   }
 });
+
 router.delete("/removeFavrite/:favoriteId", auth, async (req, res, next) => {
   try {
     await removeFavorite(req, res);
@@ -30,4 +32,11 @@ router.delete("/removeFavrite/:favoriteId", auth, async (req, res, next) => {
   }
 });
 
+router.get('/getWhoFavriteYou' , auth , async(req , res , next) =>{
+  try {
+    await fetchUsersWhoFavorited(req , res)
+  } catch (error) {
+    next(error)
+  }
+})
 export default router;

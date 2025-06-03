@@ -2,7 +2,9 @@ import express from "express";
 import { auth } from "../../middlewares/token-decode";
 import {
   addLikeToUser,
+  fetchAllMatch,
   fetchLikedUsers,
+  getUsersWhoLikedYou,
   removeUserLike,
 } from "../../controllers/users/likeController";
 const router = express.Router();
@@ -31,4 +33,19 @@ router.delete("/disLike/:to", auth, async (req, res, next) => {
   }
 });
 
-export default router
+router.get("/getWhoLikedYou", auth, async (req, res, next) => {
+  try {
+    await getUsersWhoLikedYou(req, res);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/fetchAllMatch", auth, async (req, res, next) => {
+  try {
+  await fetchAllMatch(req , res)
+  } catch (error) {
+    next(error)
+  }
+});
+export default router;

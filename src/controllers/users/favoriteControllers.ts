@@ -8,12 +8,12 @@ export const addFavorite = async (req: CustomRequest, res: Response) => {
     const userId = req.user._id;
     const { to } = req.params;
     // Check if the 'to' user exists
-    if(userId == to){
-        return res.status(400).json({
-            status : false,
-            message : "you can't add youself in favorite",
-            data : ""
-        })
+    if (userId == to) {
+      return res.status(400).json({
+        status: false,
+        message: "you can't add youself in favorite",
+        data: "",
+      });
     }
     const toUser = await UserModel.findById(to);
     if (!toUser) {
@@ -93,6 +93,32 @@ export const removeFavorite = async (req: CustomRequest, res: Response) => {
       status: true,
       message: "Remove from the list",
       data: exist,
+    });
+  } catch (error: any) {
+    console.log("error", error.message);
+    return res.status(400).json({
+      status: false,
+      message: "something Went wrong",
+      data: "",
+    });
+  }
+};
+
+export const fetchUsersWhoFavorited = async (
+  req: CustomRequest,
+  res: Response
+) => {
+  try {
+    const userId = req.user._id;
+    console.log("userId" , userId);
+    
+    const data = await favoriteModel.find({
+      to: userId,
+    });
+    return res.status(200).json({
+      status: true,
+      message: "User Who favorite You",
+      data: data,
     });
   } catch (error: any) {
     console.log("error", error.message);
