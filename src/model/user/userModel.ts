@@ -5,7 +5,7 @@ export interface IUser extends Document {
   name: string;
   email: string;
   profilePicture: string;
-  mobilenumber: string;
+  mobileNumber: number;
   birthDate: string;
   age: number;
   gender: mongoose.Schema.Types.ObjectId;
@@ -24,8 +24,8 @@ export interface IUser extends Document {
 const UserSchema: Schema = new Schema<IUser>({
   profilePicture: { type: String, default: "" },
   name: { type: String, default: "" },
-  email: { type: String, unique: true, default: "" },
-  mobilenumber: { type: String, default: null },
+  email: { type: String, unique: true },
+  mobileNumber: { type: Number, default: null },
   birthDate: { type: String, default: "" },
   age: { type: Number, min: 18 },
   gender: { type: mongoose.Schema.Types.ObjectId, ref: "Gender" },

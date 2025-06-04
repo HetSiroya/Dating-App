@@ -65,3 +65,32 @@ export const buyPlan = async (req: CustomRequest, res: Response) => {
     });
   }
 };
+
+export const getPurchasePlan = async (req: CustomRequest, res: Response) => {
+  try {
+    const userId = req.user._id;
+    const user = await UserModel.findById(userId);
+    if (user?.isPremium !== true) {
+      return res.status(400).json({
+        status: false,
+        message: "You need to buy perium first",
+        data: "",
+      });
+    }
+    const data = await purchaseModel.find({
+      userId: userId,
+    });
+    return res.status(200).json({
+      status: true,
+      message: "Your Purchase history",
+      data: data,
+    });
+  } catch (error: any) {
+    console.log("error", error.message);
+    return res.status(400).json({
+      status: false,
+      message: "something Went wrong",
+      data: "",
+    });
+  }
+};

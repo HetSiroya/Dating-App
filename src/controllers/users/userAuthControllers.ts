@@ -76,10 +76,22 @@ export const registerThrougEmail = async (req: Request, res: Response) => {
 
 export const verifyOtp = async (req: Request, res: Response) => {
   try {
-    const { email, otp } = req.body;
-    const verify = await verificationModel.findOne({
-      email: email,
-    });
+    const { email, mobileNumber, otp } = req.body;
+
+    // Build dynamic query for verification
+
+    const query: any = {};
+    if (email) query.email = email;
+    if (mobileNumber) query.mobileNumber = mobileNumber;
+
+    if (!otp || (!email && !mobileNumber)) {
+      return res.status(400).json({
+        status: false,
+        message: "Email or mobile number and OTP are required",
+        data: "",
+      });
+    }
+    const verify = await verificationModel.findOne(query);
     if (!verify) {
       return res.status(400).json({
         status: false,
@@ -90,46 +102,53 @@ export const verifyOtp = async (req: Request, res: Response) => {
     if (verify.otp !== otp) {
       return res.status(400).json({
         status: false,
-        message: "otp not match",
+        message: "OTP does not match",
         data: "",
       });
     }
-    await verificationModel.findByIdAndDelete(verify._id);
-    let data;
-    data = await UserModel.findOne({
-      email: email,
-    });
+    // await verificationModel.findByIdAndDelete(verify._id);
+
+    // Build dynamic query for user
+    const userQuery: any = {};
+    if (email) userQuery.email = email;
+    if (mobileNumber) userQuery.mobileNumber = mobileNumber;
+
+    let data = await UserModel.findOne(userQuery);
     if (data) {
       const tokenData = {
         _id: data._id,
         email: data.email,
         isProfileCompleted: data.isProfileCompleted,
-        mobileNumber: data.mobilenumber,
+        mobileNumber: data.mobileNumber,
       };
       const token = generateToken(tokenData);
-      await verificationModel.findByIdAndDelete(verify._id);
       return res.status(200).json({
         status: true,
-        message: "login Succesfully",
+        message: "Login successfully",
         data: data,
         token: token,
       });
     }
-    data = new UserModel({
-      email: email,
-    });
+
+    // Create new user dynamically
+    const newUser: any = {};
+    if (email) newUser.email = email;
+    if (mobileNumber) newUser.mobileNumber = mobileNumber;
+    log("useer", newUser);
+    data = new UserModel(newUser);
     await data.save();
-    // Optionally, generate a token for the new user as well
+
     const tokenData = {
       _id: data._id,
       email: data.email,
       isProfileCompleted: data.isProfileCompleted,
-      mobileNumber: data.mobilenumber,
+      mobileNumber: data.mobileNumber,
     };
     const token = generateToken(tokenData);
+
     return res.status(200).json({
       status: true,
-      message: "login Succesfully",
+      message: "Login successfully",
       data: data,
       token: token,
     });
@@ -137,7 +156,7 @@ export const verifyOtp = async (req: Request, res: Response) => {
     console.log("Error", error.message);
     return res.status(400).json({
       status: 400,
-      message: "something Went wrong",
+      message: "Something went wrong",
       data: "",
     });
   }
@@ -230,7 +249,7 @@ export const updateProfile = async (req: CustomRequest, res: Response) => {
       _id: updateData._id,
       email: updateData.email,
       isProfileCompleted: updateData.isProfileCompleted,
-      mobileNumber: updateData.mobilenumber,
+      mobileNumber: updateData.mobileNumber,
     };
     const token = generateToken(tokenData);
 

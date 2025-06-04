@@ -46,7 +46,7 @@ export const getUsers = async (req: CustomRequest, res: Response) => {
 
     const { city, latitude, longitude } = location;
 
-    let query: any = { _id: { $ne: user._id } };
+    let query: any = { _id: { $ne: user._id }, isProfileCompleted: true };
 
     if (age) {
       if (user.isPremium !== true) {

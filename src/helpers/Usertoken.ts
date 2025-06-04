@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 interface User {
   _id: any;
   email: string;
-  mobileNumber : string
+  mobileNumber : number
   isProfileCompleted: boolean;
 }
 
