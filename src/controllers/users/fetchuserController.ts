@@ -1,29 +1,13 @@
+import { log } from "console";
 import { CustomRequest } from "../../middlewares/token-decode";
-import { UserModel } from "../../model/user/userModel";
+import { userModel } from "../../model/user/userModel";
 import express, { Request, Response } from "express";
-
-// Helper: Haversine distance formula
-const getDistance = (
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number => {
-  const toRad = (value: number) => (value * Math.PI) / 180;
-  const R = 6371; // Radius of Earth in km
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-};
+import { getDistance as geolibGetDistance } from "geolib";
 
 export const getUsers = async (req: CustomRequest, res: Response) => {
   try {
     const userId = req.user._id;
-    const user = await UserModel.findById(userId);
+    const user = await userModel.findById(userId);
 
     if (user?.isProfileCompleted !== true) {
       return res.status(400).json({
@@ -34,6 +18,9 @@ export const getUsers = async (req: CustomRequest, res: Response) => {
     }
 
     const { age, intrest, categroy } = req.body;
+    const { page, limit } = req.query;
+    const parsedPage = Number(page) || 1;
+    const parsedLimit = Number(limit) || 2;
 
     const location =
       typeof user?.location === "object" && user?.location !== null
@@ -44,10 +31,11 @@ export const getUsers = async (req: CustomRequest, res: Response) => {
           })
         : {};
 
-    const { city, latitude, longitude } = location;
+    const { latitude, longitude } = location;
 
     let query: any = { _id: { $ne: user._id }, isProfileCompleted: true };
 
+    log("premium", user.isPremium);
     if (age) {
       if (user.isPremium !== true) {
         return res.status(400).json({
@@ -61,21 +49,23 @@ export const getUsers = async (req: CustomRequest, res: Response) => {
     if (intrest) query.intrest = intrest;
     if (categroy) query.gender = categroy;
 
-    let usersQuery = UserModel.find(query);
+    let usersQuery = userModel.find(query);
 
     // If not premium, limit to 20 users
-    if (user.isPremium !== true) {
-      usersQuery = usersQuery.limit(20);
-    }
+    let effectiveLimit = user.isPremium === true ? parsedLimit : 20;
+    let effectivePage = parsedPage;
+
+    usersQuery = usersQuery
+      .skip((effectivePage - 1) * effectiveLimit)
+      .limit(effectiveLimit);
 
     const users = await usersQuery;
 
-    // Add distance to each user (if possible)
+    // Add distance to each user (if possible) using geolib
     const usersWithDistance = users.map((u) => {
       const userLoc =
         typeof u.location === "object" && u.location !== null
           ? (u.location as {
-              city?: string;
               latitude?: number;
               longitude?: number;
             })
@@ -84,28 +74,41 @@ export const getUsers = async (req: CustomRequest, res: Response) => {
       const userLon = userLoc.longitude;
 
       let distance = Number.MAX_VALUE;
-      if (latitude && longitude && userLat && userLon) {
-        distance = getDistance(latitude, longitude, userLat, userLon);
+      if (
+        typeof latitude === "number" &&
+        typeof longitude === "number" &&
+        typeof userLat === "number" &&
+        typeof userLon === "number"
+      ) {
+        distance =
+          geolibGetDistance(
+            { latitude, longitude },
+            { latitude: userLat, longitude: userLon }
+          ) / 1000; // convert meters to km
       }
 
       return { ...u.toObject(), distance };
     });
 
-    // Separate and sort
-    const sameCityUsers = usersWithDistance
-      .filter((u) => u.location.city === city)
-      .sort((a, b) => a.distance - b.distance);
+    // Sort by distance only
+    const sortedUsers = usersWithDistance.sort(
+      (a, b) => a.distance - b.distance
+    );
 
-    const otherUsers = usersWithDistance
-      .filter((u) => u.location?.city !== city)
-      .sort((a, b) => a.distance - b.distance);
-
-    const sortedUsers = [...sameCityUsers, ...otherUsers];
+    // Get total count for pagination
+    const totalUsers = await userModel.countDocuments(query);
+    const totalPages = Math.ceil(totalUsers / effectiveLimit);
 
     return res.status(200).json({
       status: true,
       message: "Users fetched successfully",
       data: sortedUsers,
+      pagination: {
+        total: totalUsers,
+        page: effectivePage,
+        limit: effectiveLimit,
+        totalPages,
+      },
     });
   } catch (error: any) {
     console.log("error", error.message);

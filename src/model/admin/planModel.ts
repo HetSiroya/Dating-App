@@ -5,6 +5,7 @@ interface IPlan {
   planeName: string;
   detail: string;
   price: number;
+  duration : number
   status: string;
 }
 
@@ -26,10 +27,15 @@ const planeSchema = new Schema<IPlan>({
     type: Number,
     required: true,
   },
+  duration: {
+    type: Number,
+    required: true,
+  },
   status: {
     type: String,
     default: "active",
     required: true,
+    enum: ["active", "inactive"],
   },
 });
 

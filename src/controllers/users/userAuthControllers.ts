@@ -2,12 +2,11 @@ import express, { Request, Response } from "express";
 import generateNumericOTP from "../../helpers/otpGenerator";
 import mongoose from "mongoose";
 import verificationModel from "../../model/verificationModel";
-import { UserModel } from "../../model/user/userModel";
+import { userModel } from "../../model/user/userModel";
 import generateToken from "../../helpers/Usertoken";
 import { CustomRequest } from "../../middlewares/token-decode";
 import { genderModel } from "../../model/admin/genderModel";
 import { intrestModel } from "../../model/admin/intrestModel";
-import { log } from "console";
 
 export const registerThrougMobileNumber = async (
   req: Request,
@@ -18,26 +17,32 @@ export const registerThrougMobileNumber = async (
     if (!mobileNumber) {
       return res.status(400).json({
         status: false,
-        message: "Mobile number is requires",
+        message: "Mobile number is required",
         data: "",
       });
     }
     const otp = generateNumericOTP();
-    const newVerification = new verificationModel({
-      mobileNumber: mobileNumber,
-      otp: otp,
-    });
-    await newVerification.save();
+    let verification = await verificationModel.findOne({ mobileNumber });
+    if (verification) {
+      verification.otp = Number(otp);
+      await verification.save();
+    } else {
+      verification = new verificationModel({
+        mobileNumber: mobileNumber,
+        otp: otp,
+      });
+      await verification.save();
+    }
     return res.status(200).json({
       status: true,
-      message: " otp sent succesfully",
-      data: newVerification,
+      message: "OTP sent successfully",
+      data: verification,
     });
   } catch (error: any) {
     console.log("Error", error.message);
     return res.status(400).json({
       status: 400,
-      message: "something Went wrong",
+      message: "Something went wrong",
       data: "",
     });
   }
@@ -49,26 +54,32 @@ export const registerThrougEmail = async (req: Request, res: Response) => {
     if (!email) {
       return res.status(400).json({
         status: false,
-        message: "email is requires",
+        message: "Email is required",
         data: "",
       });
     }
     const otp = generateNumericOTP();
-    const newVerification = new verificationModel({
-      email: email,
-      otp: otp,
-    });
-    await newVerification.save();
+    let verification = await verificationModel.findOne({ email });
+    if (verification) {
+      verification.otp = Number(otp);
+      await verification.save();
+    } else {
+      verification = new verificationModel({
+        email: email,
+        otp: otp,
+      });
+      await verification.save();
+    }
     return res.status(200).json({
       status: true,
-      message: " otp sent succesfully",
-      data: newVerification,
+      message: "OTP sent successfully",
+      data: verification,
     });
   } catch (error: any) {
     console.log("Error", error.message);
     return res.status(400).json({
       status: 400,
-      message: "something Went wrong",
+      message: "Something went wrong",
       data: "",
     });
   }
@@ -106,14 +117,14 @@ export const verifyOtp = async (req: Request, res: Response) => {
         data: "",
       });
     }
-    // await verificationModel.findByIdAndDelete(verify._id);
+    await verificationModel.findByIdAndDelete(verify._id);
 
     // Build dynamic query for user
     const userQuery: any = {};
     if (email) userQuery.email = email;
     if (mobileNumber) userQuery.mobileNumber = mobileNumber;
 
-    let data = await UserModel.findOne(userQuery);
+    let data = await userModel.findOne(userQuery);
     if (data) {
       const tokenData = {
         _id: data._id,
@@ -134,8 +145,8 @@ export const verifyOtp = async (req: Request, res: Response) => {
     const newUser: any = {};
     if (email) newUser.email = email;
     if (mobileNumber) newUser.mobileNumber = mobileNumber;
-    log("useer", newUser);
-    data = new UserModel(newUser);
+    // log("useer", newUser);
+    data = new userModel(newUser);
     await data.save();
 
     const tokenData = {
@@ -167,9 +178,8 @@ export const updateProfile = async (req: CustomRequest, res: Response) => {
     const userId = req.user?._id;
     const { name, dob, gender, intrestedthings, location, attract } = req.body;
     let query: any = {};
-    const user = await UserModel.findById(userId);
-    const photoPath = req.file?.path;
-    if (photoPath) query.profilePicture = photoPath;
+    const user = await userModel.findById(userId);
+
     if (name) query.name = name;
     if (dob) {
       query.birthDate = dob;
@@ -235,7 +245,7 @@ export const updateProfile = async (req: CustomRequest, res: Response) => {
       query.isProfileCompleted = true;
     }
 
-    const updateData = await UserModel.findByIdAndUpdate(userId, query, {
+    const updateData = await userModel.findByIdAndUpdate(userId, query, {
       new: true,
     });
     if (!updateData) {
@@ -297,6 +307,47 @@ export const getAllIntrest = async (req: Request, res: Response) => {
       status: true,
       message: "Intrest list",
       data: intrests,
+    });
+  } catch (error: any) {
+    console.log("error", error.message);
+    return res.status(400).json({
+      status: false,
+      message: "something Went wrong",
+      data: "",
+    });
+  }
+};
+
+export const getYourProfile = async (req: CustomRequest, res: Response) => {
+  try {
+    const userId = req.user._id;
+    const userData = await userModel.findById(userId);
+    return res.status(200).json({
+      status: true,
+      message: "Your data",
+      data: userData,
+    });
+  } catch (error: any) {
+    console.log("error", error.message);
+    return res.status(400).json({
+      status: false,
+      message: "something Went wrong",
+      data: "",
+    });
+  }
+};
+
+export const updateProfilePhoto = async (req: CustomRequest, res: Response) => {
+  try {
+    const userId = req.user._id;
+    const photoPath = req.file?.path;
+    const update = await userModel.findByIdAndUpdate(userId, {
+      profilePicture: photoPath,
+    } , {new : true});
+    return res.status(200).json({
+      status: true,
+      message: "Update profile photo succesfully",
+      data: update,
     });
   } catch (error: any) {
     console.log("error", error.message);

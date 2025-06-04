@@ -6,12 +6,20 @@ import { log } from "console";
 export const addPlane = async (req: CustomRequest, res: Response) => {
   try {
     const userId = req.user._id;
-    const { planeName, price, details } = req.body;
+    const { planeName, price, details , duration } = req.body;
+    if (!planeName || !price || !details || !duration) {
+      return res.status(400).json({
+        status: false,
+        message: "All fields (planeName, price, details, duration) are required",
+        data: "",
+      });
+    }
     const newPlan = new planeModel({
       addedBy: userId,
       planeName: planeName,
       detail: details,
       price: price,
+      duration : Number(duration)
     });
     await newPlan.save();
     return res.status(200).json({

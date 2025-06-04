@@ -2,7 +2,8 @@ import jwt, { Secret, JwtPayload } from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
 require("dotenv").config();
 import dotenv from "dotenv";
-
+import { userModel } from "../model/user/userModel";
+import { adminModel } from "../model/admin/adminModel";
 
 export const SECRET_KEY: Secret =
   process.env.JWT_SECRET_KEY || "gfg_jwt_secret_key";
@@ -34,7 +35,12 @@ export const auth = async (
     if (!decoded) {
       throw new Error("Invalid token");
     }
-    
+    const user = await userModel.findById(decoded._id);
+    const admin = await adminModel.findById(decoded._id);
+
+    if (!user && !admin) {
+      throw new Error("User not found");
+    }
     req.user = decoded;
 
     next();

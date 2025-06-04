@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import { CustomRequest } from "../../middlewares/token-decode";
 import favoriteModel from "../../model/user/favoriteModel";
-import { UserModel } from "../../model/user/userModel";
+import { userModel } from "../../model/user/userModel";
 
 export const addFavorite = async (req: CustomRequest, res: Response) => {
   try {
@@ -15,7 +15,7 @@ export const addFavorite = async (req: CustomRequest, res: Response) => {
         data: "",
       });
     }
-    const toUser = await UserModel.findById(to);
+    const toUser = await userModel.findById(to);
     if (!toUser) {
       return res.status(404).json({
         status: false,
@@ -110,8 +110,8 @@ export const fetchUsersWhoFavorited = async (
 ) => {
   try {
     const userId = req.user._id;
-    console.log("userId" , userId);
-    
+    console.log("userId", userId);
+
     const data = await favoriteModel.find({
       to: userId,
     });

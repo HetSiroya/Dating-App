@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import { CustomRequest } from "../../middlewares/token-decode";
-import { UserModel } from "../../model/user/userModel";
+import { userModel } from "../../model/user/userModel";
 import { likeModel } from "../../model/user/likeModel";
 import { matchModel } from "../../model/user/matchModel";
 
@@ -8,7 +8,7 @@ export const addLikeToUser = async (req: CustomRequest, res: Response) => {
   try {
     const userId = req.user._id;
     const { likeTo } = req.params;
-    const likeUser = await UserModel.findById(likeTo);
+    const likeUser = await userModel.findById(likeTo);
     if (!likeUser) {
       return res.status(400).json({
         status: false,

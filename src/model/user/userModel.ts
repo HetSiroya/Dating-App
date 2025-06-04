@@ -43,4 +43,4 @@ const UserSchema: Schema = new Schema<IUser>({
   isPremium: { type: Boolean, default: false },
 });
 
-export const UserModel = mongoose.model<IUser>("User", UserSchema);
+export const userModel = mongoose.model<IUser>("User", UserSchema);

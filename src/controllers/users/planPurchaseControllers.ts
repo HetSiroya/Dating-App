@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 import { CustomRequest } from "../../middlewares/token-decode";
 import { planeModel } from "../../model/admin/planModel";
 import purchaseModel from "../../model/user/planModel";
-import { UserModel } from "../../model/user/userModel";
+import { userModel } from "../../model/user/userModel";
 
 export const getPlan = async (req: CustomRequest, res: Response) => {
   try {
@@ -37,11 +37,18 @@ export const buyPlan = async (req: CustomRequest, res: Response) => {
         data: "",
       });
     }
-    const newPurchase = await new purchaseModel({
+    const today = new Date();
+    const duration = plan.duration; // assuming duration is in months
+    const endDate = new Date(today);
+    endDate.setMonth(endDate.getMonth() + duration);
+    today.setHours(0, 0, 0, 0); // Set time to 00:00:00.000
+    const newPurchase = new purchaseModel({
       userId: userId,
       planId: planId,
+      startDate: today,
+      endDate: endDate,
     });
-    await UserModel.findByIdAndUpdate(
+    await userModel.findByIdAndUpdate(
       userId,
       {
         isPremium: true,
@@ -69,7 +76,7 @@ export const buyPlan = async (req: CustomRequest, res: Response) => {
 export const getPurchasePlan = async (req: CustomRequest, res: Response) => {
   try {
     const userId = req.user._id;
-    const user = await UserModel.findById(userId);
+    const user = await userModel.findById(userId);
     if (user?.isPremium !== true) {
       return res.status(400).json({
         status: false,

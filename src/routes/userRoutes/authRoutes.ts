@@ -2,6 +2,7 @@ import express from "express";
 import {
   getAllIntrest,
   getGender,
+  getYourProfile,
   registerThrougEmail,
   registerThrougMobileNumber,
   updateProfile,
@@ -60,7 +61,15 @@ router.get("/getAllIntrest", async (req, res, next) => {
   try {
     await getAllIntrest(req, res);
   } catch (error) {
-    next(error)
+    next(error);
+  }
+});
+
+router.get("/getYourProfileData", auth, async (req, res, next) => {
+  try {
+    await getYourProfile(req, res);
+  } catch (error) {
+    next(error);
   }
 });
 

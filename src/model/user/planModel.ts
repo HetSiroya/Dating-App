@@ -5,6 +5,8 @@ import { ref } from "process";
 interface IPlan {
   userId: mongoose.Schema.Types.ObjectId;
   planId: mongoose.Schema.Types.ObjectId;
+  startDate: Date;
+  endDate: Date;
 }
 
 const purchaseSchema = new Schema<IPlan>(
@@ -17,6 +19,14 @@ const purchaseSchema = new Schema<IPlan>(
     planId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "plans",
+      required: true,
+    },
+    startDate: {
+      type: Date,
+      required: true,
+    },
+    endDate: {
+      type: Date,
       required: true,
     },
   },

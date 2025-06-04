@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import { CustomRequest } from "../../middlewares/token-decode";
-import { UserModel } from "../../model/user/userModel";
+import { userModel } from "../../model/user/userModel";
 import { matchModel } from "../../model/user/matchModel";
 
 export const getAllStudent = async (req: CustomRequest, res: Response) => {
@@ -12,7 +12,7 @@ export const getAllStudent = async (req: CustomRequest, res: Response) => {
     if (intrest) query.intrestedthings = intrest;
     if (gender) query.gender = gender;
     if (typeof isPremium !== "undefined") query.isPremium = isPremium;
-    const data = await UserModel.find(query);
+    const data = await userModel.find(query);
     return res.status(200).json({
       status: true,
       message: "User Fetch succesfully",
@@ -32,11 +32,9 @@ export const userMatches = async (req: CustomRequest, res: Response) => {
   try {
     const userId = req.user._id;
     const { id } = req.query;
-    let query : any = {}
+    let query: any = {};
     if (id) {
-        
-         query = { $or: [{ user1: id }, { user2: id }] };
-          
+      query = { $or: [{ user1: id }, { user2: id }] };
     }
     const data = await matchModel.find(query);
     return res.status(200).json({
@@ -53,4 +51,3 @@ export const userMatches = async (req: CustomRequest, res: Response) => {
     });
   }
 };
-
